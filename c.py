@@ -1,11 +1,12 @@
 import streamlit as st
 import sqlite3
 import pandas as pd
+import plotly.express as px
 from io import BytesIO
 import uuid
 
 # Configuração da página
-st.set_page_config(page_title="Tarumã Pesquisa Conf", page_icon="🌲")
+st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
 
 # Função para conectar ao banco de dados
 def conectar_banco():
@@ -75,6 +76,51 @@ def salvar_configuracoes(exibir_real, candidato_favorecido=None):
     conn.commit()
     conn.close()
 
+# =======================================
+# Código da Página do Usuário
+# =======================================
+
+# Função para verificar o estado do token
+def verificar_token(token):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('SELECT usado_intencao, usado_rejeicao FROM tokens WHERE token = ?', (token,))
+    resultado = cursor.fetchone()
+    conn.close()
+    return resultado
+
+# Função para marcar o token como usado na intenção de voto
+def marcar_token_como_usado_intencao(token):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE tokens SET usado_intencao = TRUE WHERE token = ?', (token,))
+    conn.commit()
+    conn.close()
+
+# Função para marcar o token como usado na rejeição
+def marcar_token_como_usado_rejeicao(token):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('UPDATE tokens SET usado_rejeicao = TRUE WHERE token = ?', (token,))
+    conn.commit()
+    conn.close()
+
+# Função para registrar a intenção de voto
+def registrar_intencao_voto(candidato, token):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO intencao_voto (candidato, token) VALUES (?, ?)', (candidato, token))
+    conn.commit()
+    conn.close()
+
+# Função para registrar a rejeição
+def registrar_rejeicao(candidato, token):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO rejeicao (candidato, token) VALUES (?, ?)', (candidato, token))
+    conn.commit()
+    conn.close()
+
 # Função para exibir a tabela `configuracao` como dataframe
 def exibir_dataframe_configuracao():
     conn = conectar_banco()
@@ -127,6 +173,151 @@ def zerar_rejeicao():
     conn.commit()
     conn.close()
 
+# Função para gerar o gráfico de rosca para intenção de voto
+def gerar_grafico_intencao_voto(candidato_favorecido=None):
+    conn = conectar_banco()
+    df = pd.read_sql_query("SELECT candidato, COUNT(*) as votos FROM intencao_voto GROUP BY candidato", conn)
+    conn.close()
+
+    # Manipular dados se houver um candidato favorecido e gráfico vantajoso estiver ativado
+    if candidato_favorecido:
+        df = trocar_votos(df, candidato_favorecido, 'votos')
+
+    total_participantes = df['votos'].sum()
+    fig = px.pie(df, names='candidato', values='votos', hole=0.4, title=f'Intenção de Voto ({total_participantes} participantes)')
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(showlegend=False)
+    return fig
+
+# Função para gerar o gráfico de rosca para rejeição
+def gerar_grafico_rejeicao(candidato_favorecido=None):
+    conn = conectar_banco()
+    df = pd.read_sql_query("SELECT candidato, COUNT(*) as rejeicoes FROM rejeicao GROUP BY candidato", conn)
+    conn.close()
+
+    # Manipular dados se houver um candidato favorecido e gráfico vantajoso estiver ativado
+    if candidato_favorecido:
+        df = trocar_rejeicoes(df, candidato_favorecido)
+
+    total_participantes = df['rejeicoes'].sum()
+    fig = px.pie(df, names='candidato', values='rejeicoes', hole=0.4, title=f'Rejeição ({total_participantes} participantes)')
+    fig.update_traces(textposition='inside', textinfo='percent+label')
+    fig.update_layout(showlegend=False)
+    return fig
+
+# Função para trocar votos se o gráfico vantajoso estiver ativado
+def trocar_votos(df, candidato_favorecido, coluna):
+    if candidato_favorecido and candidato_favorecido in df['candidato'].values:
+        max_value = df[coluna].max()
+        candidato_mais_votado = df.loc[df[coluna] == max_value, 'candidato'].values[0]
+        # Trocar os valores entre o candidato favorecido e o candidato com maior votação
+        df.loc[df['candidato'] == candidato_mais_votado, coluna] = df.loc[df['candidato'] == candidato_favorecido, coluna].values[0]
+        df.loc[df['candidato'] == candidato_favorecido, coluna] = max_value
+    return df
+
+# Função para trocar rejeições se o gráfico vantajoso estiver ativado
+def trocar_rejeicoes(df, candidato_favorecido):
+    if candidato_favorecido and candidato_favorecido in df['candidato'].values:
+        max_rejeicoes = df['rejeicoes'].max()
+        candidato_mais_rejeitado = df.loc[df['rejeicoes'] == max_rejeicoes, 'candidato'].values[0]
+        
+        if candidato_mais_rejeitado == candidato_favorecido:
+            segundo_mais_rejeitado = df.loc[df['rejeicoes'] != max_rejeicoes, 'rejeicoes'].max()
+            
+            # Verificar se o segundo candidato existe antes de tentar acessar
+            if not df[df['rejeicoes'] == segundo_mais_rejeitado].empty:
+                segundo_candidato = df.loc[df['rejeicoes'] == segundo_mais_rejeitado, 'candidato'].values[0]
+                
+                # Trocar os valores entre o candidato favorecido e o segundo mais rejeitado
+                df.loc[df['candidato'] == segundo_candidato, 'rejeicoes'] = max_rejeicoes
+                df.loc[df['candidato'] == candidato_favorecido, 'rejeicoes'] = segundo_mais_rejeitado
+    return df
+
+# Função para validar o token
+def validar_token(token_url):
+    if token_url == "admin-Ro4143":
+        return "admin"
+    else:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('SELECT token FROM tokens WHERE token = ?', (token_url,))
+        resultado = cursor.fetchone()
+        conn.close()
+        if resultado:
+            return "user"
+        else:
+            return None
+
+# Páginas separadas
+def pagina_usuario(token_url):
+    st.title("🌲 Instituto Tarumã Pesquisa")
+
+    # Criar as tabelas se ainda não existirem
+    criar_tabelas()
+
+    # Carregar as configurações de gráficos
+    config = carregar_configuracoes()
+    if config:
+        exibir_real, candidato_favorecido = config
+    else:
+        st.error("Erro ao carregar as configurações.")
+        return
+
+    if token_url and len(token_url) > 0:
+        # Verificar o estado do token no banco de dados
+        resultado = verificar_token(token_url)
+        
+        if resultado is None:
+            st.error("Link não encontrado no banco de dados.")
+        else:
+            usado_intencao, usado_rejeicao = resultado
+
+            # Mostrar gráficos e formulários baseados no estado do token
+            if usado_intencao and usado_rejeicao:
+                st.info("Seu voto já foi computado, obrigado por participar!")
+                st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+                st.markdown("---")  # Separador entre os gráficos
+                st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+            else:
+                if not usado_intencao:
+                    st.success("Link válido para intenção de voto.")
+                    with st.form(key='intencao_voto'):
+                        st.write("Se as eleições em São Miguel do Guaporé fossem hoje, em qual desses candidatos você votaria?")
+                        candidato = st.radio(
+                            "Escolha o candidato:",
+                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi')
+                        )
+                        submit_voto = st.form_submit_button("Votar")
+                        if submit_voto:
+                            registrar_intencao_voto(candidato, token_url)
+                            marcar_token_como_usado_intencao(token_url)
+                            st.success(f"Seu voto em {candidato} foi registrado com sucesso!")
+                            st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+
+                if not usado_rejeicao:
+                    st.success("Link válido para rejeição.")
+                    with st.form(key='rejeicao'):
+                        st.write("Em qual desses candidatos você não votaria de jeito nenhum?")
+                        rejeicao = st.radio(
+                            "Escolha o candidato:",
+                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes')
+                        )
+                        submit_rejeicao = st.form_submit_button("Registrar rejeição")
+                        if submit_rejeicao:
+                            registrar_rejeicao(rejeicao, token_url)
+                            marcar_token_como_usado_rejeicao(token_url)
+                            st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso!")
+                            # Exibir ambos os gráficos após o registro de rejeição
+                            st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+                            st.markdown("---")  # Separador entre os gráficos
+                            st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+
+    else:
+        st.error("Link não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
+# =======================================
+# Código da Página de Configurações (Admin)
+# =======================================     
+#    
 # Função para converter DataFrame para Excel e CSV para download
 def converter_para_excel(df):
     output = BytesIO()
@@ -136,8 +327,6 @@ def converter_para_excel(df):
 
 def converter_para_csv(df):
     return df.to_csv(index=False).encode('utf-8')
-
-# Função para criar tokens aleatórios
 def criar_tokens(quantidade):
     conn = conectar_banco()
     cursor = conn.cursor()
@@ -147,39 +336,37 @@ def criar_tokens(quantidade):
     conn.commit()
     conn.close()
 
-# Função para validar o token
-def validar_token(token_url):
-    if token_url == "admin-Ro4143":
-        return True
-    else:
-        conn = conectar_banco()
-        cursor = conn.cursor()
-        cursor.execute('SELECT token FROM tokens WHERE token = ?', (token_url,))
-        resultado = cursor.fetchone()
-        conn.close()
-        return resultado is not None
 
-def main():
+def exibir_e_gerar_download_tokens():
+    st.subheader("Visualização dos Tokens")
+    df_tokens = exibir_tokens()
+    st.dataframe(df_tokens)
+
+    # Botões para download dos tokens em Excel e CSV
+    st.download_button(
+        label="Baixar Tokens (Excel)",
+        data=converter_para_excel(df_tokens),
+        file_name="tokens.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    st.download_button(
+        label="Baixar Tokens (CSV)",
+        data=converter_para_csv(df_tokens),
+        file_name="tokens.csv",
+        mime="text/csv"
+    )
+
+def pagina_admin():
     st.title("Configurações")
 
     # Criar as tabelas se ainda não existirem
     criar_tabelas()
 
-    # Capturar token da URL
-    query_params = st.query_params
-    token_url = query_params.get('token', None)
-    token_url = token_url[0] if isinstance(token_url, list) else token_url
-
-    # Validar o token
-    if token_url is None or not validar_token(token_url):
-        st.error("Token inválido ou não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
-        return
-
     # Exibir opções de configuração
     st.subheader("Configurações dos Gráficos")
     
     config = carregar_configuracoes()
-
     if config:
         exibir_real, candidato_favorecido = config
     else:
@@ -213,6 +400,26 @@ def main():
         st.success("Configurações salvas com sucesso.")
 
     # Separador
+    st.markdown("---")
+    
+    # Exibição da tabela de tokens com botão para atualizar e baixar em Excel
+    st.subheader("Visualização da Tabela de Tokens")
+    df_tokens = exibir_tokens()
+    st.dataframe(df_tokens)
+    
+    if st.button("Atualizar Tabela de Tokens"):
+        df_tokens = exibir_tokens()
+        st.dataframe(df_tokens)
+        st.success("Tabela de Tokens atualizada.")
+
+    st.download_button(
+        label="Baixar Tokens (Excel)",
+        data=converter_para_excel(df_tokens),
+        file_name="tokens.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+    # Separador acima do botão de download
     st.markdown("---")
 
     # Botões para download dos votos
@@ -254,44 +461,6 @@ def main():
         mime="text/csv"
     )
 
-    # Download de rejeição em Excel e CSV
-    st.download_button(
-        label="Baixar Rejeição (Excel)",
-        data=converter_para_excel(df_rejeicao),
-        file_name="rejeicao.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    st.download_button(
-        label="Baixar Rejeição (CSV)",
-        data=converter_para_csv(df_rejeicao),
-        file_name="rejeicao.csv",
-        mime="text/csv"
-    )
-
-    # Separador para as opções de zerar tokens
-    st.markdown("---")
-
-    # Exibir tokens antes de zerá-los
-    st.subheader("Visualização dos Tokens")
-    df_tokens = exibir_tokens()
-    st.dataframe(df_tokens)
-
-    # Botões para download dos tokens em Excel e CSV
-    st.download_button(
-        label="Baixar Tokens (Excel)",
-        data=converter_para_excel(df_tokens),
-        file_name="tokens.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
-    st.download_button(
-        label="Baixar Tokens (CSV)",
-        data=converter_para_csv(df_tokens),
-        file_name="tokens.csv",
-        mime="text/csv"
-    )
-
     # Separador para a opção de zerar banco de dados
     st.markdown("---")
 
@@ -306,7 +475,7 @@ def main():
             # Reexibir os tokens após zerar para verificar se deu certo
             df_tokens = exibir_tokens()
             st.dataframe(df_tokens)
-        
+
         # Botão para zerar intenção de votos
         if st.button("Zerar Intenção de Votos"):
             zerar_intencao_votos()
@@ -333,6 +502,28 @@ def main():
         # Exibir os tokens após a criação
         df_tokens = exibir_tokens()
         st.dataframe(df_tokens)
+
+
+
+# =======================================
+# Código Principal para Selecionar a Página Correta
+# =======================================
+# Código principal para selecionar a página correta com base no token
+def main():
+    # Capturar token da URL
+    query_params = st.query_params
+    token_url = query_params.get('token', None)
+    token_url = token_url[0] if isinstance(token_url, list) else token_url
+
+    # Validar o token
+    pagina = validar_token(token_url)
+
+    if pagina == "admin":
+        pagina_admin()
+    elif pagina == "user":
+        pagina_usuario(token_url)
+    else:
+        st.error("Token inválido ou não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
 
 if __name__ == "__main__":
     main()
