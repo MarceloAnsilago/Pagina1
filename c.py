@@ -10,17 +10,23 @@ import uuid
 st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
 
 # Injetando o CSS para esconder o ícone do GitHub
-# Injetando o CSS para esconder o ícone do GitHub
 hide_github_icon = """
     <style>
-    [title~="View source"] {
-        display: none !important;
+    .viewerBadge_container__1QSob { 
+        visibility: hidden;
+    }
+    .css-1q8dd3e.egzxvld1 { 
+        visibility: hidden;
     }
     </style>
     """
 
 # Aplicando o estilo ao Streamlit
 st.markdown(hide_github_icon, unsafe_allow_html=True)
+
+
+
+
 
 
 # Função para conectar ao banco de dados
