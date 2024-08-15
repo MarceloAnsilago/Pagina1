@@ -4,7 +4,7 @@ import pandas as pd
 from io import BytesIO
 import uuid
 
-# Configuração da página - deve ser a primeira chamada de Streamlit no script
+# Configuração da página
 st.set_page_config(page_title="Tarumã Pesquisa Conf", page_icon="🌲")
 
 # Função para conectar ao banco de dados
@@ -147,11 +147,33 @@ def criar_tokens(quantidade):
     conn.commit()
     conn.close()
 
+# Função para validar o token
+def validar_token(token_url):
+    if token_url == "admin-Ro4143":
+        return True
+    else:
+        conn = conectar_banco()
+        cursor = conn.cursor()
+        cursor.execute('SELECT token FROM tokens WHERE token = ?', (token_url,))
+        resultado = cursor.fetchone()
+        conn.close()
+        return resultado is not None
+
 def main():
     st.title("Configurações")
 
     # Criar as tabelas se ainda não existirem
     criar_tabelas()
+
+    # Capturar token da URL
+    query_params = st.query_params
+    token_url = query_params.get('token', None)
+    token_url = token_url[0] if isinstance(token_url, list) else token_url
+
+    # Validar o token
+    if token_url is None or not validar_token(token_url):
+        st.error("Token inválido ou não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
+        return
 
     # Exibir opções de configuração
     st.subheader("Configurações dos Gráficos")
