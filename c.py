@@ -237,6 +237,8 @@ def trocar_rejeicoes(df, candidato_favorecido):
 def validar_token(token_url):
     if token_url == "admin-Ro4143":
         return "admin"
+    elif token_url == "gr@f1c=0":
+        return "grafico"
     else:
         conn = conectar_banco()
         cursor = conn.cursor()
@@ -506,9 +508,38 @@ def pagina_admin():
 
 
 # =======================================
+# Código da Nova Página de Gráficos
+# =======================================
+
+def pagina_graficos():
+    st.title("📊 Exibição de Gráficos")
+
+    # Criar as tabelas se ainda não existirem
+    criar_tabelas()
+
+    # Carregar as configurações de gráficos
+    config = carregar_configuracoes()
+    if config:
+        exibir_real, candidato_favorecido = config
+    else:
+        st.error("Erro ao carregar as configurações.")
+        return
+
+    # Exibir o primeiro gráfico conforme a configuração atual
+    st.subheader("Gráfico Atual (Configuração Atual)")
+    st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+    st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+
+    st.markdown("---")  # Separador entre os gráficos
+
+    # Exibir o gráfico real, independentemente da configuração
+    st.subheader("Gráfico Real (Dados Reais)")
+    st.plotly_chart(gerar_grafico_intencao_voto(None))  # Gráfico real, sem ajustes
+    st.plotly_chart(gerar_grafico_rejeicao(None))  # Gráfico real, sem ajustes
+
+# =======================================
 # Código Principal para Selecionar a Página Correta
 # =======================================
-# Código principal para selecionar a página correta com base no token
 def main():
     # Capturar token da URL
     query_params = st.query_params
@@ -522,8 +553,14 @@ def main():
         pagina_admin()
     elif pagina == "user":
         pagina_usuario(token_url)
+    elif token_url == "gr@f1c=0":
+        pagina_graficos()
     else:
-        st.error("Token inválido ou não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
+        st.warning("Você precisa de um link válido para participar.")
+        # Exibir gráficos como na página do usuário
+        st.plotly_chart(gerar_grafico_intencao_voto())
+        st.markdown("---")  # Separador entre os gráficos
+        st.plotly_chart(gerar_grafico_rejeicao())
 
 if __name__ == "__main__":
     main()
