@@ -12,22 +12,22 @@ st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
 
 # Injetando o CSS para esconder o ícone do GitHub
 
-hide_github_icon = """
-    <style>
-    .viewerBadge_container__1QSob { 
-        display: none; 
-    }
-    .main > div:first-of-type > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > div > div > a:nth-of-type(1) { 
-        display: none; 
-    }
-    .main > div:first-of-type > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > div > div > a:nth-of-type(2) { 
-        display: none; 
-    }
-    </style>
-    """
+# hide_github_icon = """
+#     <style>
+#     .viewerBadge_container__1QSob { 
+#         display: none; 
+#     }
+#     .main > div:first-of-type > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > div > div > a:nth-of-type(1) { 
+#         display: none; 
+#     }
+#     .main > div:first-of-type > div > div > div > div:nth-of-type(1) > div > div:nth-of-type(2) > div > div > div > a:nth-of-type(2) { 
+#         display: none; 
+#     }
+#     </style>
+#     """
 
-# Aplicando o estilo ao Streamlit
-st.markdown(hide_github_icon, unsafe_allow_html=True)
+# # Aplicando o estilo ao Streamlit
+# st.markdown(hide_github_icon, unsafe_allow_html=True)
 
 # Configuração da página
 st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
