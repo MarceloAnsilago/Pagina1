@@ -6,8 +6,12 @@ from io import BytesIO
 import uuid
 
 
+# Configuração da página deve ser a primeira chamada
 st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
+
+
 # Injetando o CSS para esconder o ícone do GitHub
+
 hide_github_icon = """
     <style>
     .viewerBadge_container__1QSob { 
