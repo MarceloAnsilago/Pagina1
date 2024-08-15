@@ -6,4 +6,7 @@ matplotlib==3.7.2
 scipy==1.11.2
 setuptools>=58.0.0
 wheel>=0.37.0
+xlsxwriter==3.2.0
+
+
 
