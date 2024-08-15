@@ -39,7 +39,8 @@ def criar_tabelas():
     CREATE TABLE IF NOT EXISTS configuracao (
         id INTEGER PRIMARY KEY,
         exibir_real BOOLEAN NOT NULL,
-        candidato_favorecido TEXT
+        candidato_favorecido TEXT,
+        data_hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     ''')
     # Inserir configuração inicial, se não existir
