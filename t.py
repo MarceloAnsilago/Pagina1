@@ -87,15 +87,10 @@ def registrar_intencao_voto(candidato, token):
 # Função para registrar a rejeição
 def registrar_rejeicao(candidato, token):
     conn = conectar_banco()
-    try:
-        cursor = conn.cursor()
-        cursor.execute('INSERT INTO rejeicao (candidato, token) VALUES (?, ?)', (candidato, token))
-        conn.commit()
-        st.write("Rejeição registrada com sucesso!")  # Log de depuração
-    except Exception as e:
-        st.error(f"Erro ao registrar rejeição: {e}")
-    finally:
-        conn.close()
+    cursor = conn.cursor()
+    cursor.execute('INSERT INTO rejeicao (candidato, token) VALUES (?, ?)', (candidato, token))
+    conn.commit()
+    conn.close()
 
 # Função para carregar as configurações atuais
 def carregar_configuracoes():
@@ -228,13 +223,19 @@ def main():
                         )
                         submit_rejeicao = st.form_submit_button("Registrar rejeição")
                         if submit_rejeicao:
-                            st.write(f"Registrando rejeição para {rejeicao}")  # Log de depuração
                             registrar_rejeicao(rejeicao, token_url)
                             marcar_token_como_usado_rejeicao(token_url)
                             st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso!")
                             st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
     else:
         st.error("Link não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
+
+    # Exibir a tabela de tokens como um DataFrame temporário para depuração
+    conn = conectar_banco()
+    df_tokens = pd.read_sql_query("SELECT * FROM tokens", conn)
+    conn.close()
+    st.write("Tabela de Tokens:")
+    st.dataframe(df_tokens)
 
 if __name__ == "__main__":
     main()
