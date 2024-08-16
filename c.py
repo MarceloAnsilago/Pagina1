@@ -9,9 +9,6 @@ import uuid
 # Configuração da página deve ser a primeira chamada
 st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
 
-# Configuração da página deve ser a primeira chamada
-st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
-
 # Injetando o CSS para esconder o ícone do GitHub e outros elementos indesejados
 hide_github_icon = """
     <style>
