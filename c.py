@@ -321,7 +321,7 @@ def pagina_usuario(token_url):
                         if submit_voto:
                             registrar_intencao_voto(candidato, token_url)
                             marcar_token_como_usado_intencao(token_url)
-                            st.success(f"Seu voto em {candidato} foi registrado com sucesso!")
+                            st.success(f"Seu voto em {candidato} foi registrado com sucesso! Atualize a pagina pra ver o resultado!!")
                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
 
                 if not usado_rejeicao:
