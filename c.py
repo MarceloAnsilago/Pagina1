@@ -278,7 +278,79 @@ def validar_token(token_url):
         else:
             return None
 
-# Páginas separadas
+# # Páginas separadas
+# def pagina_usuario(token_url):
+#     st.title("🌲 Instituto Tarumã Pesquisa")
+
+#     # Criar as tabelas se ainda não existirem
+#     criar_tabelas()
+
+#     # Carregar as configurações de gráficos
+#     config = carregar_configuracoes()
+#     if config:
+#         exibir_real, candidato_favorecido = config
+#     else:
+#         st.error("Erro ao carregar as configurações.")
+#         return
+
+#     if token_url and len(token_url) > 0:
+#         # Verificar o estado do token no banco de dados
+#         resultado = verificar_token(token_url)
+        
+#         if resultado is None:
+#             st.error("Link não encontrado no banco de dados.")
+#         else:
+#             usado_intencao, usado_rejeicao = resultado
+
+#             # Mostrar gráficos e formulários baseados no estado do token
+#             if usado_intencao and usado_rejeicao:
+#                 st.info("Seu voto já foi computado, obrigado por participar!")
+#                 st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+#                 st.markdown("---")  # Separador entre os gráficos
+#                 st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+#             else:
+#                 if not usado_intencao:
+#                     st.success("Link válido para intenção de voto.")
+#                     with st.form(key='intencao_voto'):
+#                         st.write("Se as eleições em São Miguel do Guaporé fossem hoje, em qual desses candidatos você votaria?")
+#                         candidato = st.radio(
+#                             "Escolha o candidato:",
+#                             ('Selecione uma opção', 'Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi')
+#                         )
+#                         submit_voto = st.form_submit_button("Votar")
+
+#                         if candidato != 'Selecione uma opção' and submit_voto:
+#                             # Continuar o processo de votação
+#                             registrar_intencao_voto(candidato, token_url)
+#                             marcar_token_como_usado_intencao(token_url)
+#                             st.success(f"Seu voto em {candidato} foi registrado com sucesso! Atualize a página para ver o resultado!")
+#                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+#                         elif candidato == 'Selecione uma opção' and submit_voto:
+#                             st.warning("Você precisa selecionar um candidato antes de votar.")
+
+#                 if not usado_rejeicao:
+#                     st.success("Link válido para rejeição.")
+#                     with st.form(key='rejeicao'):
+#                         st.write("Em qual desses candidatos você não votaria de jeito nenhum?")
+#                         rejeicao = st.radio(
+#                             "Escolha o candidato:",
+#                             ('Selecione uma opção', 'Fabio de Paula', 'Coronel Crispim', 'Prof Eudes')
+#                         )
+#                         submit_rejeicao = st.form_submit_button("Registrar rejeição")
+                        
+#                         if rejeicao != 'Selecione uma opção' and submit_rejeicao:
+#                             registrar_rejeicao(rejeicao, token_url)
+#                             marcar_token_como_usado_rejeicao(token_url)
+#                             st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso! Atualize a página para ver o resultado!")
+#                             # Exibir ambos os gráficos após o registro de rejeição
+#                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+#                             st.markdown("---")  # Separador entre os gráficos
+#                             st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+#                         elif rejeicao == 'Selecione uma opção' and submit_rejeicao:
+#                             st.warning("Você precisa selecionar um candidato antes de registrar a rejeição.")
+
+#     else:
+#         st.error("Link não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
 def pagina_usuario(token_url):
     st.title("🌲 Instituto Tarumã Pesquisa")
 
@@ -313,37 +385,46 @@ def pagina_usuario(token_url):
                     st.success("Link válido para intenção de voto.")
                     with st.form(key='intencao_voto'):
                         st.write("Se as eleições em São Miguel do Guaporé fossem hoje, em qual desses candidatos você votaria?")
-                        candidato = st.radio(
+                        candidato = st.selectbox(
                             "Escolha o candidato:",
-                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi'), index=-1 
+                            ['', 'Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi']
                         )
                         submit_voto = st.form_submit_button("Votar")
-                        if submit_voto:
+
+                        if candidato != '' and submit_voto:
+                            # Continuar o processo de votação
                             registrar_intencao_voto(candidato, token_url)
                             marcar_token_como_usado_intencao(token_url)
-                            st.success(f"Seu voto em {candidato} foi registrado com sucesso! Atualize a pagina pra ver o resultado!!")
+                            st.success(f"Seu voto em {candidato} foi registrado com sucesso! Atualize a página para ver o resultado!")
                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
+                        elif candidato == '' and submit_voto:
+                            st.warning("Você precisa selecionar um candidato antes de votar.")
 
                 if not usado_rejeicao:
                     st.success("Link válido para rejeição.")
                     with st.form(key='rejeicao'):
                         st.write("Em qual desses candidatos você não votaria de jeito nenhum?")
-                        rejeicao = st.radio(
+                        rejeicao = st.selectbox(
                             "Escolha o candidato:",
-                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes'),index=-1 
+                            ['', 'Fabio de Paula', 'Coronel Crispim', 'Prof Eudes']
                         )
                         submit_rejeicao = st.form_submit_button("Registrar rejeição")
-                        if submit_rejeicao:
+                        
+                        if rejeicao != '' and submit_rejeicao:
                             registrar_rejeicao(rejeicao, token_url)
                             marcar_token_como_usado_rejeicao(token_url)
-                            st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso! Atualize a página pra ver o resultado")
+                            st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso! Atualize a página para ver o resultado!")
                             # Exibir ambos os gráficos após o registro de rejeição
                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
                             st.markdown("---")  # Separador entre os gráficos
                             st.plotly_chart(gerar_grafico_rejeicao(candidato_favorecido if not exibir_real else None))
+                        elif rejeicao == '' and submit_rejeicao:
+                            st.warning("Você precisa selecionar um candidato antes de registrar a rejeição.")
 
     else:
         st.error("Link não fornecido na URL. Adicione ?token=SEU_TOKEN à URL.")
+
+
 # =======================================
 # Código da Página de Configurações (Admin)
 # =======================================     
