@@ -9,17 +9,17 @@ import uuid
 # Configuração da página deve ser a primeira chamada
 st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
 
-# Injetando o CSS para esconder o ícone do GitHub
+# Configuração da página deve ser a primeira chamada
+st.set_page_config(page_title="Instituto Tarumã Pesquisa", page_icon="🌲")
+
+# Injetando o CSS para esconder o ícone do GitHub e outros elementos indesejados
 hide_github_icon = """
     <style>
-    .viewerBadge_container__1QSob { 
-        visibility: hidden;
-    }
-    .css-1q8dd3e.egzxvld1 { 
-        visibility: hidden;
+    [data-testid="stDecoration"] {
+        display: none !important;
     }
     </style>
-    """
+"""
 
 # Aplicando o estilo ao Streamlit
 st.markdown(hide_github_icon, unsafe_allow_html=True)
