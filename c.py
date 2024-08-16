@@ -315,7 +315,7 @@ def pagina_usuario(token_url):
                         st.write("Se as eleições em São Miguel do Guaporé fossem hoje, em qual desses candidatos você votaria?")
                         candidato = st.radio(
                             "Escolha o candidato:",
-                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi')
+                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes', 'Branco/Nulo', 'Não sei/Não decidi'), index=-1 
                         )
                         submit_voto = st.form_submit_button("Votar")
                         if submit_voto:
@@ -330,7 +330,7 @@ def pagina_usuario(token_url):
                         st.write("Em qual desses candidatos você não votaria de jeito nenhum?")
                         rejeicao = st.radio(
                             "Escolha o candidato:",
-                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes')
+                            ('Fabio de Paula', 'Coronel Crispim', 'Prof Eudes'),index=-1 
                         )
                         submit_rejeicao = st.form_submit_button("Registrar rejeição")
                         if submit_rejeicao:
