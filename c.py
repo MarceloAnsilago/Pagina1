@@ -336,7 +336,7 @@ def pagina_usuario(token_url):
                         if submit_rejeicao:
                             registrar_rejeicao(rejeicao, token_url)
                             marcar_token_como_usado_rejeicao(token_url)
-                            st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso!")
+                            st.success(f"Sua rejeição para {rejeicao} foi registrada com sucesso! Atualize a página pra ver o resultado")
                             # Exibir ambos os gráficos após o registro de rejeição
                             st.plotly_chart(gerar_grafico_intencao_voto(candidato_favorecido if not exibir_real else None))
                             st.markdown("---")  # Separador entre os gráficos
